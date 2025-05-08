@@ -7,7 +7,7 @@ st.title("🌐 Website Content Extractor (No JS Support)")
 
 url = st.text_input("Enter a website URL:", placeholder="https://www.handelsblatt.com")
 
-SCRAPERAPI_KEY = "YOUR_API_KEY"  # Get from https://www.scraperapi.com/
+SCRAPERAPI_KEY = "6dcdbfe6abd52277720b900142e043e0"  # Get from https://www.scraperapi.com/
 
 if url:
     try:

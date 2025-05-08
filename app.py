@@ -1,31 +1,27 @@
 import streamlit as st
+import requests
 from bs4 import BeautifulSoup
-from playwright.sync_api import sync_playwright
 import io
 
-st.title("🌐 Website Content Extractor (JS Compatible)")
+st.title("🌐 Website Content Extractor (No JS Support)")
 
 url = st.text_input("Enter a website URL:", placeholder="https://www.handelsblatt.com")
 
-def extract_with_playwright(url):
-    with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
-        page = browser.new_page()
-        page.goto(url, wait_until="networkidle", timeout=15000)
-        html = page.content()
-        browser.close()
-        return html
+SCRAPERAPI_KEY = "YOUR_API_KEY"  # Get from https://www.scraperapi.com/
 
 if url:
     try:
-        html = extract_with_playwright(url)
-        soup = BeautifulSoup(html, 'html.parser')
-        text = soup.get_text(separator="\n", strip=True)
+        api_url = f"http://api.scraperapi.com?api_key={SCRAPERAPI_KEY}&url={url}"
+        response = requests.get(api_url)
+        response.raise_for_status()
+
+        soup = BeautifulSoup(response.text, 'html.parser')
+        content = soup.get_text(separator="\n", strip=True)
 
         st.subheader("📄 Extracted Content")
-        st.text_area("Page Text", text, height=400)
+        st.text_area("Page Text", content, height=400)
 
-        buffer = io.BytesIO(text.encode("utf-8"))
+        buffer = io.BytesIO(content.encode("utf-8"))
         st.download_button(
             label="📥 Download .txt",
             data=buffer,
@@ -34,3 +30,4 @@ if url:
         )
     except Exception as e:
         st.error(f"Error extracting content: {e}")
+

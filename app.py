@@ -1,34 +1,36 @@
 import streamlit as st
-import requests
 from bs4 import BeautifulSoup
+from playwright.sync_api import sync_playwright
 import io
 
-st.set_page_config(page_title="Website Content Extractor", layout="centered")
+st.title("🌐 Website Content Extractor (JS Compatible)")
 
-st.title("🌐 Website Content Extractor")
+url = st.text_input("Enter a website URL:", placeholder="https://www.handelsblatt.com")
 
-url = st.text_input("Enter a website URL:", placeholder="https://example.com")
+def extract_with_playwright(url):
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=True)
+        page = browser.new_page()
+        page.goto(url, wait_until="networkidle", timeout=15000)
+        html = page.content()
+        browser.close()
+        return html
 
 if url:
     try:
-        response = requests.get(url, timeout=10)
-        response.raise_for_status()
+        html = extract_with_playwright(url)
+        soup = BeautifulSoup(html, 'html.parser')
+        text = soup.get_text(separator="\n", strip=True)
 
-        soup = BeautifulSoup(response.text, 'html.parser')
-        content = soup.get_text(separator='\n', strip=True)
+        st.subheader("📄 Extracted Content")
+        st.text_area("Page Text", text, height=400)
 
-        st.subheader("📄 Extracted Text Content:")
-        st.text_area("Website Text", content, height=400)
-
-        # Download button
-        content_bytes = content.encode('utf-8')
-        buffer = io.BytesIO(content_bytes)
+        buffer = io.BytesIO(text.encode("utf-8"))
         st.download_button(
-            label="📥 Download Text as .txt",
+            label="📥 Download .txt",
             data=buffer,
             file_name="website_content.txt",
             mime="text/plain"
         )
-
-    except requests.exceptions.RequestException as e:
-        st.error(f"Error downloading content: {e}")
+    except Exception as e:
+        st.error(f"Error extracting content: {e}")
